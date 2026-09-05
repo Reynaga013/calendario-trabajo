@@ -1116,19 +1116,19 @@ try { enableIndexedDbPersistence(db); } catch (e) { /* fine, e.g. multiple tabs 
     if (authResolved) return;
     loadingScreen.hidden = true;
     authScreen.hidden = false;
-    authError.textContent = 'Está tardando más de lo normal en comprobar tu sesión. Puede ser tu conexión o un bloqueador de anuncios/VPN — mientras tanto, entra o crea tu cuenta aquí abajo.';
+    authError.textContent = 'Está tardando más de lo normal en comprobar tu sesión. Si abriste este link dentro de otra app (Discord, WhatsApp, Instagram...), ábrelo directamente en Safari o Chrome. Mientras tanto, puedes entrar o crear tu cuenta aquí abajo.';
   }, 6000);
 
   onAuthStateChanged(auth, function (user) {
     authResolved = true;
     clearTimeout(authStuckTimer);
     loadingScreen.hidden = true;
+    authError.textContent = '';
     if (user) {
       currentUser = user;
       authScreen.hidden = true;
       appRoot.hidden = false;
       authForm.reset();
-      authError.textContent = '';
       accountEmailEl.textContent = user.email || '';
       subscribeToAccount(user.uid);
     } else {
