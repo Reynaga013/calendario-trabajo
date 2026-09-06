@@ -775,6 +775,7 @@ try { enableIndexedDbPersistence(db); } catch (e) { /* fine, e.g. multiple tabs 
       saveAll();
       renderDayCard();
       renderGrid();
+      renderSummary();
     });
 
     head.appendChild(nameInput);
@@ -811,6 +812,7 @@ try { enableIndexedDbPersistence(db); } catch (e) { /* fine, e.g. multiple tabs 
       hint.textContent = fmtHours(newHours);
       if (entry.client.trim()) memory[normalize(entry.client)] = { label: entry.client, hours: entry.hours, pay: entry.pay };
       saveAll();
+      renderSummary();
     }
     minusBtn.addEventListener('click', function () { applyHours(entry.hours - 0.5); });
     plusBtn.addEventListener('click', function () { applyHours(entry.hours + 0.5); });
@@ -871,6 +873,7 @@ try { enableIndexedDbPersistence(db); } catch (e) { /* fine, e.g. multiple tabs 
     saveAll();
     renderDayCard();
     renderGrid();
+    renderSummary();
     var inputs = document.querySelectorAll('#dayCard .name-input');
     var last = inputs[inputs.length - 1];
     if (last) last.focus();
