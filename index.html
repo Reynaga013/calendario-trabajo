@@ -1,0 +1,1210 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Calendario de Trabajo</title>
+<meta name="description" content="Apunta tus clientas de limpieza, las horas y lo que cobras cada día, organizado en un calendario.">
+<meta name="theme-color" content="#007aff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Calendario">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+  :root {
+    --bg-base: #f2f2f7;
+    --blob-blue: #0a84ff;
+    --blob-green: #34c759;
+    --blob-purple: #af52de;
+    --blob-opacity: 0.28;
+    --text: #1c1c1e;
+    --text-secondary: rgba(60, 60, 67, 0.6);
+    --text-tertiary: rgba(60, 60, 67, 0.35);
+    --accent: #007aff;
+    --accent-contrast: #ffffff;
+    --positive: #248a3d;
+    --positive-soft: rgba(52, 199, 89, 0.16);
+    --danger: #ff3b30;
+    --danger-soft: rgba(255, 59, 48, 0.14);
+    --fill: rgba(120, 120, 128, 0.12);
+    --fill-strong: rgba(120, 120, 128, 0.2);
+    --glass-bg: rgba(255, 255, 255, 0.55);
+    --glass-border: rgba(255, 255, 255, 0.75);
+    --glass-shadow: 0 8px 30px rgba(0, 0, 0, 0.10);
+    --sep: rgba(60, 60, 67, 0.16);
+    --today-ring: #ff3b30;
+    color-scheme: light;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg-base: #000000;
+      --blob-blue: #0a84ff;
+      --blob-green: #30d158;
+      --blob-purple: #bf5af2;
+      --blob-opacity: 0.4;
+      --text: #ffffff;
+      --text-secondary: rgba(235, 235, 245, 0.6);
+      --text-tertiary: rgba(235, 235, 245, 0.35);
+      --accent: #0a84ff;
+      --accent-contrast: #ffffff;
+      --positive: #30d158;
+      --positive-soft: rgba(48, 209, 88, 0.22);
+      --danger: #ff453a;
+      --danger-soft: rgba(255, 69, 58, 0.2);
+      --fill: rgba(120, 120, 128, 0.24);
+      --fill-strong: rgba(120, 120, 128, 0.34);
+      --glass-bg: rgba(28, 28, 30, 0.55);
+      --glass-border: rgba(255, 255, 255, 0.14);
+      --glass-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+      --sep: rgba(235, 235, 245, 0.16);
+      --today-ring: #ff453a;
+      color-scheme: dark;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg-base: #000000;
+    --blob-blue: #0a84ff;
+    --blob-green: #30d158;
+    --blob-purple: #bf5af2;
+    --blob-opacity: 0.4;
+    --text: #ffffff;
+    --text-secondary: rgba(235, 235, 245, 0.6);
+    --text-tertiary: rgba(235, 235, 245, 0.35);
+    --accent: #0a84ff;
+    --accent-contrast: #ffffff;
+    --positive: #30d158;
+    --positive-soft: rgba(48, 209, 88, 0.22);
+    --danger: #ff453a;
+    --danger-soft: rgba(255, 69, 58, 0.2);
+    --fill: rgba(120, 120, 128, 0.24);
+    --fill-strong: rgba(120, 120, 128, 0.34);
+    --glass-bg: rgba(28, 28, 30, 0.55);
+    --glass-border: rgba(255, 255, 255, 0.14);
+    --glass-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    --sep: rgba(235, 235, 245, 0.16);
+    --today-ring: #ff453a;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    margin: 0; padding: 0;
+    overflow-x: hidden;
+    overscroll-behavior-x: none;
+    width: 100%;
+  }
+
+  body {
+    background: var(--bg-base);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    padding-bottom: 128px;
+    min-height: 100vh;
+    touch-action: pan-y;
+    overscroll-behavior-y: contain;
+  }
+
+  .bg-mesh { position: fixed; inset: 0; overflow: hidden; z-index: -1; }
+  .bg-mesh span {
+    position: absolute; width: 62vmax; height: 62vmax; border-radius: 50%;
+    filter: blur(60px); opacity: var(--blob-opacity);
+  }
+  .bg-mesh span:nth-child(1) { background: var(--blob-blue); top: -22%; left: -14%; animation: drift 34s ease-in-out infinite; }
+  .bg-mesh span:nth-child(2) { background: var(--blob-green); bottom: -26%; right: -16%; animation: drift 40s ease-in-out infinite reverse; }
+  .bg-mesh span:nth-child(3) { background: var(--blob-purple); top: 28%; right: -22%; opacity: calc(var(--blob-opacity) - 0.08); animation: drift 46s ease-in-out infinite; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    @keyframes drift {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(4%, -3%) scale(1.06); }
+    }
+  }
+
+  button { font-family: inherit; }
+  button, .cal-cell { -webkit-tap-highlight-color: transparent; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    button, .cal-cell .num { transition: transform 0.15s cubic-bezier(0.34, 1.4, 0.64, 1); }
+    button:active, .cal-cell:active .num { transform: scale(0.92); }
+  }
+
+  .wrap { max-width: 640px; margin: 0 auto; padding: 0 14px; }
+
+  .glass {
+    position: relative;
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    border-radius: 20px;
+  }
+  .glass::before {
+    content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+    background: linear-gradient(135deg, rgba(255,255,255,0.45), rgba(255,255,255,0) 40%, rgba(255,255,255,0) 60%, rgba(255,255,255,0.12));
+    mix-blend-mode: overlay;
+  }
+
+  header.top {
+    position: sticky; top: 0; z-index: 10;
+    padding: calc(10px + env(safe-area-inset-top)) 14px 10px;
+    margin: 0 -14px;
+    background: transparent;
+  }
+  .top-inner { max-width: 640px; margin: 0 auto; padding: 10px 14px; border-radius: 22px; }
+  .top-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .brand { display: flex; align-items: center; gap: 9px; }
+  .brand .icon-circle {
+    width: 34px; height: 34px; border-radius: 10px; flex: none;
+    background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center;
+  }
+  .brand h1 { font-size: 1.08rem; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+  .brand p { margin: 1px 0 0; font-size: 0.74rem; color: var(--text-secondary); }
+
+  .icon-btn {
+    display: flex; align-items: center; justify-content: center;
+    width: 34px; height: 34px; border-radius: 10px;
+    border: none; background: var(--fill); color: var(--text-secondary); cursor: pointer; flex: none;
+  }
+  .icon-btn:focus-visible, input:focus-visible, button:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px;
+  }
+
+  main { padding-top: 10px; display: flex; flex-direction: column; gap: 14px; }
+
+  .cal-card { padding: 14px 12px 16px; }
+  .month-nav { display: flex; align-items: center; justify-content: space-between; padding: 0 2px 10px; }
+  .month-nav-btn {
+    width: 32px; height: 32px; border-radius: 9px; border: none; background: var(--fill);
+    color: var(--text); display: flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+  .month-label { text-align: center; }
+  .month-label .name { font-size: 1rem; font-weight: 700; letter-spacing: -0.01em; }
+  .month-label button.today-btn {
+    display: block; margin: 1px auto 0; background: none; border: none; color: var(--accent);
+    font-size: 0.72rem; font-weight: 600; cursor: pointer; padding: 0;
+  }
+
+  .cal-dow-row { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 2px; }
+  .cal-dow { text-align: center; font-size: 0.65rem; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.02em; padding-bottom: 4px; }
+
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; }
+  .cal-cell {
+    aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 3px; border-radius: 12px; cursor: pointer; border: none; background: transparent; padding: 0;
+  }
+  .cal-cell .num {
+    font-size: 0.86rem; font-weight: 500; font-variant-numeric: tabular-nums;
+    width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; color: var(--text);
+  }
+  .cal-cell.other-month .num { color: var(--text-tertiary); }
+  .cal-cell.today .num { box-shadow: inset 0 0 0 1.5px var(--today-ring); color: var(--today-ring); font-weight: 700; }
+  .cal-cell.selected .num { background: var(--accent); color: #fff; font-weight: 700; box-shadow: none; }
+  .cal-cell .dot { width: 4.5px; height: 4.5px; border-radius: 50%; background: var(--positive); }
+  .cal-cell .dot.empty { visibility: hidden; }
+
+  .day-card { padding: 14px 14px 16px; }
+  .day-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+  .day-head h2 { margin: 0; font-size: 1rem; font-weight: 700; letter-spacing: -0.01em; text-transform: capitalize; }
+  .day-total { font-size: 0.94rem; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .day-total .zero { color: var(--text-tertiary); font-weight: 500; }
+
+  .entries { display: flex; flex-direction: column; gap: 8px; }
+  .entry-card { background: var(--fill); border-radius: 14px; padding: 10px 11px; }
+  .entry-head { display: flex; align-items: center; gap: 8px; }
+  .entry-head input.name-input {
+    flex: 1; min-width: 0; border: none; background: transparent; color: var(--text);
+    font-size: 0.95rem; font-weight: 600; padding: 2px 0;
+  }
+  .entry-head input.name-input::placeholder { color: var(--text-tertiary); font-weight: 400; }
+  .entry-head input.name-input:focus { outline: none; }
+  .del-btn {
+    width: 28px; height: 28px; border: none; background: transparent; color: var(--text-tertiary);
+    cursor: pointer; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex: none;
+  }
+  .del-btn:hover { color: var(--danger); background: var(--danger-soft); }
+
+  .entry-detail { display: flex; align-items: stretch; gap: 7px; margin-top: 8px; }
+  .hours-box {
+    flex: 1.15; display: flex; align-items: center; gap: 3px; background: var(--fill-strong);
+    border-radius: 10px; padding: 3px 5px;
+  }
+  .hours-box button {
+    width: 24px; height: 24px; border: none; background: var(--fill); color: var(--text-secondary);
+    border-radius: 7px; cursor: pointer; flex: none; font-size: 0.95rem;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .hours-mid { flex: 1; text-align: center; min-width: 0; }
+  .hours-mid input {
+    width: 100%; border: none; background: transparent; color: var(--text); text-align: center;
+    font-size: 0.9rem; font-weight: 600; font-variant-numeric: tabular-nums; padding: 1px 0;
+  }
+  .hours-mid input:focus { outline: none; }
+  .hours-mid .hint { font-size: 0.6rem; color: var(--text-tertiary); margin-top: -1px; }
+
+  .pay-box {
+    flex: 1; display: flex; align-items: center; gap: 3px; background: var(--fill-strong);
+    border-radius: 10px; padding: 3px 10px; justify-content: center;
+  }
+  .pay-box span { color: var(--text-tertiary); font-size: 0.82rem; }
+  .pay-box input {
+    border: none; background: transparent; color: var(--positive); font-size: 0.98rem; font-weight: 700;
+    font-variant-numeric: tabular-nums; text-align: center; width: 100%; padding: 1px 0;
+  }
+  .pay-box input::placeholder { color: var(--text-tertiary); font-weight: 500; }
+  .pay-box input:focus { outline: none; }
+
+  .day-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .add-entry-btn, .copy-btn {
+    padding: 9px; border-radius: 12px; border: none; font-size: 0.84rem; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .add-entry-btn { flex: 1.3; background: var(--accent); color: #fff; }
+  .copy-btn { flex: 1; background: var(--fill); color: var(--text-secondary); }
+
+  .empty-day { font-size: 0.84rem; color: var(--text-secondary); padding: 6px 2px 2px; text-align: center; }
+
+  footer.summary {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+    padding: 0 14px calc(14px + env(safe-area-inset-bottom));
+    display: flex; justify-content: center;
+    pointer-events: none;
+  }
+  .summary-pill {
+    pointer-events: auto;
+    padding: 10px 26px; border-radius: 24px;
+    display: flex; flex-direction: column; align-items: center; gap: 0;
+    max-width: 640px; width: 100%;
+  }
+  .summary-pill .stat-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-secondary); }
+  .summary-pill .stat-value { font-size: 1.28rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--positive); margin-top: 1px; }
+  .summary-pill .stat-hours { font-size: 0.72rem; color: var(--text-secondary); margin-top: 1px; font-variant-numeric: tabular-nums; }
+
+  .sheet-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 20; display: none; align-items: flex-end; justify-content: center;
+  }
+  .sheet-backdrop.open { display: flex; }
+  .sheet {
+    width: 100%; max-width: 640px; border-radius: 22px 22px 0 0; padding: 18px 20px calc(20px + env(safe-area-inset-bottom));
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .sheet h3 { margin: 0 0 2px; font-size: 1rem; font-weight: 700; }
+  .sheet p { margin: 0 0 4px; font-size: 0.86rem; color: var(--text-secondary); }
+  .sheet-row {
+    width: 100%; text-align: left; padding: 12px 14px; border-radius: 12px; border: none;
+    background: var(--fill); color: var(--text); font-size: 0.9rem; font-weight: 600; cursor: pointer;
+  }
+  .sheet-row.danger { background: var(--danger-soft); color: var(--danger); }
+  .sheet-cancel {
+    width: 100%; padding: 11px; border-radius: 12px; border: none; background: transparent;
+    color: var(--accent); font-weight: 600; font-size: 0.9rem; cursor: pointer; margin-top: 2px;
+  }
+  .sheet-actions { display: flex; gap: 10px; margin-top: 4px; }
+  .sheet-actions button { flex: 1; padding: 11px; border-radius: 12px; border: none; font-weight: 600; font-size: 0.9rem; cursor: pointer; }
+  .sheet-actions .cancel { background: var(--fill); color: var(--text); }
+  .sheet-actions .confirm-danger { background: var(--danger); color: #fff; }
+
+  .center-screen {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px;
+  }
+  .center-screen[hidden] { display: none; }
+  .auth-card { width: 100%; max-width: 380px; padding: 26px 24px 24px; }
+  .auth-card .icon-circle {
+    width: 44px; height: 44px; border-radius: 13px; background: var(--accent); color: #fff;
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 14px;
+  }
+  .auth-card h1 { font-size: 1.2rem; font-weight: 700; text-align: center; margin: 0; }
+  .auth-card p.sub { text-align: center; font-size: 0.84rem; color: var(--text-secondary); margin: 6px 0 20px; }
+  .field-label { font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); margin: 0 0 4px 2px; display: block; }
+  .field-box {
+    display: flex; align-items: center; gap: 6px; background: var(--fill); border-radius: 12px;
+    padding: 11px 13px; margin-bottom: 12px;
+  }
+  .field-box input {
+    flex: 1; min-width: 0; border: none; background: transparent; color: var(--text); font-size: 0.95rem;
+  }
+  .field-box input:focus { outline: none; }
+  .field-box input::placeholder { color: var(--text-tertiary); }
+  .eye-btn { border: none; background: transparent; color: var(--text-tertiary); cursor: pointer; display: flex; padding: 2px; }
+  .auth-error {
+    background: var(--danger-soft); color: var(--danger); font-size: 0.82rem; border-radius: 10px;
+    padding: 9px 12px; margin-bottom: 12px; display: block;
+  }
+  .auth-error:empty { display: none; }
+  .auth-info {
+    background: var(--fill); color: var(--text); font-size: 0.82rem; border-radius: 10px;
+    padding: 9px 12px; margin-bottom: 12px; display: block;
+  }
+  .auth-info:empty { display: none; }
+  .link-btn {
+    border: none; background: transparent; color: var(--accent); font-weight: 600;
+    font-size: 0.8rem; cursor: pointer; padding: 0; display: block; margin: -6px 0 12px auto;
+  }
+  .auth-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+  .btn-primary {
+    padding: 12px; border-radius: 12px; border: none; background: var(--accent); color: #fff;
+    font-weight: 700; font-size: 0.95rem; cursor: pointer;
+  }
+  .btn-secondary {
+    padding: 12px; border-radius: 12px; border: none; background: var(--fill); color: var(--text);
+    font-weight: 600; font-size: 0.9rem; cursor: pointer;
+  }
+  .btn-primary:disabled, .btn-secondary:disabled { opacity: 0.6; cursor: default; }
+  .auth-note { text-align: center; font-size: 0.74rem; color: var(--text-tertiary); margin-top: 16px; }
+  .loading-dot {
+    width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin: 0 auto;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .loading-dot { animation: pulse 1s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 0.3; transform: scale(0.85); } 50% { opacity: 1; transform: scale(1.1); } }
+  }
+  .account-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    background: var(--fill); border-radius: 12px; padding: 10px 13px; margin-bottom: 4px;
+  }
+  .account-row .who { font-size: 0.82rem; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .account-row button { border: none; background: transparent; color: var(--accent); font-weight: 600; font-size: 0.84rem; cursor: pointer; flex: none; }
+</style>
+</head>
+<body>
+
+<div class="bg-mesh"><span></span><span></span><span></span></div>
+
+<div class="center-screen" id="loadingScreen">
+  <div class="loading-dot"></div>
+</div>
+
+<div class="center-screen" id="authScreen" hidden>
+  <div class="auth-card glass">
+    <div class="icon-circle">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2"></rect><path d="M16 3v3M8 3v3M3 9.5h18"></path></svg>
+    </div>
+    <h1>Mi calendario</h1>
+    <p class="sub">Entra con tu cuenta para que tus clientas, horas y cobros vivan también en la nube.</p>
+
+    <div class="auth-error" id="authError"></div>
+    <div class="auth-info" id="authInfo"></div>
+
+    <form id="authForm">
+      <label class="field-label" for="authEmail">Correo electrónico</label>
+      <div class="field-box">
+        <input type="email" id="authEmail" placeholder="tucorreo@ejemplo.com" autocomplete="username" required>
+      </div>
+      <label class="field-label" for="authPassword">Contraseña</label>
+      <div class="field-box">
+        <input type="password" id="authPassword" placeholder="Al menos 6 caracteres" autocomplete="current-password" minlength="6" required>
+        <button type="button" class="eye-btn" id="toggleEye" aria-label="Mostrar contraseña">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+        </button>
+      </div>
+      <button type="button" class="link-btn" id="forgotPasswordBtn">¿Olvidaste tu contraseña?</button>
+      <div class="auth-actions">
+        <button type="submit" class="btn-primary" id="signInBtn">Entrar</button>
+        <button type="button" class="btn-secondary" id="signUpBtn">Crear cuenta nueva</button>
+      </div>
+    </form>
+    <p class="auth-note">Tus datos quedan privados: solo esta cuenta puede verlos.</p>
+  </div>
+</div>
+
+<script>
+  (function () {
+    setTimeout(function () {
+      var ls = document.getElementById('loadingScreen');
+      if (ls && !ls.hidden) {
+        ls.hidden = true;
+        var as = document.getElementById('authScreen');
+        if (as) as.hidden = false;
+        var ae = document.getElementById('authError');
+        if (ae && !ae.textContent) {
+          ae.textContent = 'La comprobación de tu sesión está tardando demasiado. Puedes entrar o crear tu cuenta aquí abajo de todos modos.';
+        }
+      }
+    }, 3500);
+  })();
+</script>
+
+<div id="appRoot" hidden>
+<div class="wrap">
+  <header class="top">
+    <div class="top-inner glass">
+      <div class="top-row">
+        <div class="brand">
+          <div class="icon-circle">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2"></rect><path d="M16 3v3M8 3v3M3 9.5h18"></path></svg>
+          </div>
+          <div>
+            <h1>Mi calendario</h1>
+            <p>Clientas, horas y lo que cobras cada día</p>
+          </div>
+        </div>
+        <button class="icon-btn" id="settingsToggle" type="button" aria-label="Ajustes">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="cal-card glass">
+      <div class="month-nav">
+        <button class="month-nav-btn" id="prevMonthBtn" type="button" aria-label="Mes anterior">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
+        </button>
+        <div class="month-label">
+          <div class="name" id="monthName">–</div>
+          <button class="today-btn" id="todayBtn" type="button" style="display:none;">Ir a hoy</button>
+        </div>
+        <button class="month-nav-btn" id="nextMonthBtn" type="button" aria-label="Mes siguiente">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg>
+        </button>
+      </div>
+      <div class="cal-dow-row" id="dowRow"></div>
+      <div class="cal-grid" id="calGrid"></div>
+    </section>
+
+    <section class="day-card glass" id="dayCard"></section>
+  </main>
+</div>
+
+<footer class="summary">
+  <div class="summary-pill glass" id="summaryPill"></div>
+</footer>
+
+<div class="sheet-backdrop" id="settingsBackdrop">
+  <div class="sheet glass">
+    <h3>Ajustes</h3>
+    <div class="account-row">
+      <span class="who" id="accountEmail">–</span>
+      <button type="button" id="signOutBtn">Cerrar sesión</button>
+    </div>
+    <p>Tus datos viven en tu cuenta. Guarda además una copia de vez en cuando por si acaso.</p>
+    <button class="sheet-row" id="exportBtn" type="button">⬇️ Exportar copia de seguridad</button>
+    <button class="sheet-row" id="importBtn" type="button">⬆️ Importar copia de seguridad</button>
+    <input type="file" id="importFile" accept="application/json" hidden>
+    <button class="sheet-row danger" id="deleteAllBtn" type="button">Borrar todo el historial</button>
+    <button class="sheet-cancel" id="settingsClose" type="button">Cerrar</button>
+  </div>
+</div>
+
+<div class="sheet-backdrop" id="resetBackdrop">
+  <div class="sheet glass">
+    <h3>Borrar todo el historial</h3>
+    <p>Esto borra todas las clientas, horas y cobros guardados de todos los meses. No se puede deshacer.</p>
+    <div class="sheet-actions">
+      <button class="cancel" id="resetCancel" type="button">Cancelar</button>
+      <button class="confirm-danger" id="resetConfirm" type="button">Borrar todo</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet-backdrop" id="copyBackdrop">
+  <div class="sheet glass">
+    <h3>Este día ya tiene clientas</h3>
+    <p>¿Añadir también las de hace una semana, sin borrar las que ya están?</p>
+    <div class="sheet-actions">
+      <button class="cancel" id="copyCancel" type="button">Cancelar</button>
+      <button class="confirm-danger" id="copyConfirm" type="button" style="background:var(--accent);">Añadir igualmente</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet-backdrop" id="importResultBackdrop">
+  <div class="sheet glass">
+    <h3 id="importResultTitle">Copia importada</h3>
+    <p id="importResultText"></p>
+    <button class="sheet-cancel" id="importResultClose" type="button">Vale</button>
+  </div>
+</div>
+
+<datalist id="knownClients"></datalist>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getAuth, onAuthStateChanged, signInWithEmailAndPassword,
+  createUserWithEmailAndPassword, signOut, sendPasswordResetEmail
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import {
+  getFirestore, doc, setDoc, onSnapshot, enableIndexedDbPersistence
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+var firebaseConfig = {
+  apiKey: "AIzaSyA5xXWSAVnigGlO6A6pQWW1R5CkWdKDTqg",
+  authDomain: "calendario-limpieza.firebaseapp.com",
+  projectId: "calendario-limpieza",
+  storageBucket: "calendario-limpieza.firebasestorage.app",
+  messagingSenderId: "422559629812",
+  appId: "1:422559629812:web:fc07ea1eed15748ccc79a1"
+};
+var fbApp = initializeApp(firebaseConfig);
+var auth = getAuth(fbApp);
+var db = getFirestore(fbApp);
+try { enableIndexedDbPersistence(db); } catch (e) { /* fine, e.g. multiple tabs open */ }
+
+(function () {
+  var DOW_SHORT = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+  var DAY_NAMES_LONG = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
+  var MONTH_NAMES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+
+  function safeGet(key, fallback) {
+    try { var raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
+    catch (e) { return fallback; }
+  }
+  function safeSet(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+  }
+
+  function isoDate(d) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function addDays(d, n) { var r = new Date(d); r.setDate(r.getDate() + n); return r; }
+  function uid() { return 'e' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function fmtMoney(n) { return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(n); }
+  function parseNum(v) {
+    if (v === '' || v === null || v === undefined) return null;
+    var n = Number(String(v).replace(',', '.'));
+    return isNaN(n) ? null : n;
+  }
+  function fmtHours(h) {
+    var hh = Math.floor(h);
+    var mm = Math.round((h - hh) * 60);
+    if (mm === 60) { hh += 1; mm = 0; }
+    if (hh === 0 && mm === 0) return '0 h';
+    if (mm === 0) return hh + ' h';
+    if (hh === 0) return mm + ' min';
+    return hh + ' h ' + mm + ' min';
+  }
+  function round2(n) { return Math.round(n * 100) / 100; }
+  function normalize(name) { return name.trim().toLowerCase().replace(/\s+/g, ' '); }
+
+  var today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  var entries = [];
+  var memory = {};
+  var viewYear = today.getFullYear();
+  var viewMonth = today.getMonth();
+  var selectedIso = isoDate(today);
+
+  var currentUser = null;
+  var unsubscribeDoc = null;
+  var lastSyncedJSON = null;
+  var migratedThisSession = false;
+
+  function saveAll() {
+    if (!currentUser) return;
+    lastSyncedJSON = JSON.stringify({ entries: entries, memory: memory });
+    setDoc(doc(db, 'users', currentUser.uid), { entries: entries, memory: memory })
+      .catch(function (e) { console.error('No se pudo guardar en la nube', e); });
+  }
+
+  function renderAll() {
+    renderGrid();
+    renderDayCard();
+    renderSummary();
+    updateDatalist();
+  }
+
+  function subscribeToAccount(uid) {
+    var ref = doc(db, 'users', uid);
+    unsubscribeDoc = onSnapshot(ref, function (snap) {
+      if (!snap.exists()) {
+        if (migratedThisSession) return;
+        migratedThisSession = true;
+        var localEntries = safeGet('wk_entries', []);
+        var localMemory = safeGet('wk_memory', {});
+        entries = localEntries;
+        memory = localMemory;
+        lastSyncedJSON = JSON.stringify({ entries: entries, memory: memory });
+        setDoc(ref, { entries: entries, memory: memory }).catch(function (e) { console.error(e); });
+        renderAll();
+        return;
+      }
+      var data = snap.data() || {};
+      var incoming = {
+        entries: Array.isArray(data.entries) ? data.entries : [],
+        memory: (data.memory && typeof data.memory === 'object') ? data.memory : {}
+      };
+      var incomingJSON = JSON.stringify(incoming);
+      if (incomingJSON === lastSyncedJSON) return;
+      lastSyncedJSON = incomingJSON;
+      entries = incoming.entries;
+      memory = incoming.memory;
+      renderAll();
+    }, function (err) {
+      console.error('Error de sincronización', err);
+    });
+  }
+
+  function unsubscribeAccount() {
+    if (unsubscribeDoc) { unsubscribeDoc(); unsubscribeDoc = null; }
+    entries = [];
+    memory = {};
+    lastSyncedJSON = null;
+    migratedThisSession = false;
+  }
+
+  function buildMonthMatrix(year, month) {
+    var first = new Date(year, month, 1);
+    var startOffset = (first.getDay() + 6) % 7;
+    var gridStart = addDays(first, -startOffset);
+    var cells = [];
+    for (var i = 0; i < 42; i++) {
+      var d = addDays(gridStart, i);
+      cells.push({ date: d, inMonth: d.getMonth() === month });
+    }
+    return cells;
+  }
+
+  function renderDow() {
+    var row = document.getElementById('dowRow');
+    row.innerHTML = '';
+    DOW_SHORT.forEach(function (d) {
+      var el = document.createElement('div');
+      el.className = 'cal-dow';
+      el.textContent = d;
+      row.appendChild(el);
+    });
+  }
+
+  function entriesFor(iso) {
+    return entries.filter(function (e) { return e.date === iso; });
+  }
+  function totalFor(iso) {
+    return entriesFor(iso).reduce(function (s, e) { return s + (e.pay || 0); }, 0);
+  }
+
+  function renderGrid() {
+    document.getElementById('monthName').textContent =
+      MONTH_NAMES[viewMonth].charAt(0).toUpperCase() + MONTH_NAMES[viewMonth].slice(1) + ' ' + viewYear;
+    var isCurrentMonth = viewYear === today.getFullYear() && viewMonth === today.getMonth();
+    document.getElementById('todayBtn').style.display = isCurrentMonth ? 'none' : 'block';
+
+    var grid = document.getElementById('calGrid');
+    grid.innerHTML = '';
+    var cells = buildMonthMatrix(viewYear, viewMonth);
+    cells.forEach(function (cell) {
+      var iso = isoDate(cell.date);
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'cal-cell' + (cell.inMonth ? '' : ' other-month');
+      if (iso === isoDate(today)) btn.className += ' today';
+      if (iso === selectedIso) btn.className += ' selected';
+
+      var num = document.createElement('div');
+      num.className = 'num';
+      num.textContent = cell.date.getDate();
+
+      var dot = document.createElement('div');
+      var hasEntries = entriesFor(iso).length > 0;
+      dot.className = 'dot' + (hasEntries ? '' : ' empty');
+
+      btn.appendChild(num);
+      btn.appendChild(dot);
+      btn.addEventListener('click', function () {
+        selectedIso = iso;
+        if (cell.date.getFullYear() !== viewYear || cell.date.getMonth() !== viewMonth) {
+          viewYear = cell.date.getFullYear();
+          viewMonth = cell.date.getMonth();
+          renderGrid();
+        } else {
+          renderGridSelectionOnly();
+        }
+        renderDayCard();
+      });
+      grid.appendChild(btn);
+    });
+  }
+
+  function renderGridSelectionOnly() {
+    var cells = document.querySelectorAll('#calGrid .cal-cell');
+    var matrix = buildMonthMatrix(viewYear, viewMonth);
+    cells.forEach(function (btn, i) {
+      var iso = isoDate(matrix[i].date);
+      btn.classList.toggle('selected', iso === selectedIso);
+    });
+  }
+
+  function updateDatalist() {
+    var dl = document.getElementById('knownClients');
+    dl.innerHTML = '';
+    Object.keys(memory).forEach(function (key) {
+      var opt = document.createElement('option');
+      opt.value = memory[key].label || key;
+      dl.appendChild(opt);
+    });
+  }
+
+  function makeEntryCard(entry) {
+    var card = document.createElement('div');
+    card.className = 'entry-card';
+
+    var head = document.createElement('div');
+    head.className = 'entry-head';
+    var nameInput = document.createElement('input');
+    nameInput.className = 'name-input';
+    nameInput.type = 'text';
+    nameInput.placeholder = 'Nombre de la clienta';
+    nameInput.value = entry.client;
+    nameInput.setAttribute('list', 'knownClients');
+    nameInput.addEventListener('change', function () {
+      entry.client = nameInput.value;
+      if (entry.client.trim()) {
+        memory[normalize(entry.client)] = { label: entry.client, hours: entry.hours, pay: entry.pay };
+      }
+      saveAll();
+    });
+
+    var delBtn = document.createElement('button');
+    delBtn.className = 'del-btn';
+    delBtn.type = 'button';
+    delBtn.setAttribute('aria-label', 'Eliminar');
+    delBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"></path></svg>';
+    delBtn.addEventListener('click', function () {
+      entries = entries.filter(function (e) { return e.id !== entry.id; });
+      saveAll();
+      renderDayCard();
+      renderGrid();
+      renderSummary();
+    });
+
+    head.appendChild(nameInput);
+    head.appendChild(delBtn);
+
+    var detail = document.createElement('div');
+    detail.className = 'entry-detail';
+
+    var hoursBox = document.createElement('div');
+    hoursBox.className = 'hours-box';
+    var minusBtn = document.createElement('button');
+    minusBtn.type = 'button';
+    minusBtn.textContent = '−';
+    minusBtn.setAttribute('aria-label', 'Restar media hora');
+    var mid = document.createElement('div');
+    mid.className = 'hours-mid';
+    var hoursInput = document.createElement('input');
+    hoursInput.type = 'text';
+    hoursInput.inputMode = 'decimal';
+    hoursInput.value = entry.hours;
+    hoursInput.setAttribute('aria-label', 'Horas trabajadas');
+    var hint = document.createElement('div');
+    hint.className = 'hint';
+    hint.textContent = fmtHours(entry.hours);
+    var plusBtn = document.createElement('button');
+    plusBtn.type = 'button';
+    plusBtn.textContent = '+';
+    plusBtn.setAttribute('aria-label', 'Sumar media hora');
+
+    function applyHours(newHours) {
+      newHours = Math.max(0, round2(newHours));
+      entry.hours = newHours;
+      hoursInput.value = newHours;
+      hint.textContent = fmtHours(newHours);
+      if (entry.client.trim()) memory[normalize(entry.client)] = { label: entry.client, hours: entry.hours, pay: entry.pay };
+      saveAll();
+      renderSummary();
+    }
+    minusBtn.addEventListener('click', function () { applyHours(entry.hours - 0.5); });
+    plusBtn.addEventListener('click', function () { applyHours(entry.hours + 0.5); });
+    hoursInput.addEventListener('change', function () { applyHours(parseNum(hoursInput.value) || 0); });
+
+    mid.appendChild(hoursInput);
+    mid.appendChild(hint);
+    hoursBox.appendChild(minusBtn);
+    hoursBox.appendChild(mid);
+    hoursBox.appendChild(plusBtn);
+
+    var payBox = document.createElement('div');
+    payBox.className = 'pay-box';
+    var sign = document.createElement('span');
+    sign.textContent = '€';
+    var payInput = document.createElement('input');
+    payInput.type = 'text';
+    payInput.inputMode = 'decimal';
+    payInput.placeholder = '0,00';
+    payInput.value = entry.pay === null || entry.pay === undefined ? '' : entry.pay;
+    payInput.setAttribute('aria-label', 'Cuánto vas a cobrar');
+    payInput.addEventListener('change', function () {
+      var v = parseNum(payInput.value);
+      entry.pay = v === null ? 0 : round2(v);
+      payInput.value = entry.pay;
+      if (entry.client.trim()) memory[normalize(entry.client)] = { label: entry.client, hours: entry.hours, pay: entry.pay };
+      saveAll();
+      renderDayTotal();
+      renderGrid();
+      renderSummary();
+    });
+    payBox.appendChild(sign);
+    payBox.appendChild(payInput);
+
+    detail.appendChild(hoursBox);
+    detail.appendChild(payBox);
+
+    card.appendChild(head);
+    card.appendChild(detail);
+    return card;
+  }
+
+  function renderDayTotal() {
+    var el = document.getElementById('dayTotalEl');
+    if (!el) return;
+    var total = totalFor(selectedIso);
+    el.innerHTML = total > 0 ? fmtMoney(total) : '<span class="zero">' + fmtMoney(0) + '</span>';
+  }
+
+  function addEntry(prefill) {
+    var e = {
+      id: uid(), date: selectedIso,
+      client: prefill ? prefill.label : '',
+      hours: prefill ? prefill.hours : 2,
+      pay: prefill ? prefill.pay : 0
+    };
+    entries.push(e);
+    saveAll();
+    renderDayCard();
+    renderGrid();
+    renderSummary();
+    var inputs = document.querySelectorAll('#dayCard .name-input');
+    var last = inputs[inputs.length - 1];
+    if (last) last.focus();
+  }
+
+  function renderDayCard() {
+    var card = document.getElementById('dayCard');
+    card.innerHTML = '';
+
+    var date = new Date(selectedIso + 'T00:00:00');
+    var head = document.createElement('div');
+    head.className = 'day-head';
+    var h2 = document.createElement('h2');
+    h2.textContent = DAY_NAMES_LONG[(date.getDay() + 6) % 7] + ', ' + date.getDate() + ' de ' + MONTH_NAMES[date.getMonth()];
+    var total = document.createElement('div');
+    total.className = 'day-total';
+    total.id = 'dayTotalEl';
+    head.appendChild(h2);
+    head.appendChild(total);
+
+    var wrap = document.createElement('div');
+    wrap.className = 'entries';
+    var dayEntries = entriesFor(selectedIso);
+    if (dayEntries.length === 0) {
+      var empty = document.createElement('div');
+      empty.className = 'empty-day';
+      empty.textContent = 'Todavía no apuntaste ninguna clienta este día.';
+      wrap.appendChild(empty);
+    } else {
+      dayEntries.forEach(function (entry) { wrap.appendChild(makeEntryCard(entry)); });
+    }
+
+    var actions = document.createElement('div');
+    actions.className = 'day-actions';
+    var addBtn = document.createElement('button');
+    addBtn.className = 'add-entry-btn';
+    addBtn.type = 'button';
+    addBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg> Añadir clienta';
+    addBtn.addEventListener('click', function () { addEntry(null); });
+
+    var copyBtn = document.createElement('button');
+    copyBtn.className = 'copy-btn';
+    copyBtn.type = 'button';
+    copyBtn.innerHTML = '↻ Semana pasada';
+    copyBtn.addEventListener('click', function () { requestCopyLastWeek(); });
+
+    actions.appendChild(addBtn);
+    actions.appendChild(copyBtn);
+
+    card.appendChild(head);
+    card.appendChild(wrap);
+    card.appendChild(actions);
+
+    renderDayTotal();
+    updateDatalist();
+  }
+
+  function copyLastWeekInto(iso) {
+    var sourceIso = isoDate(addDays(new Date(iso + 'T00:00:00'), -7));
+    var sourceEntries = entriesFor(sourceIso);
+    if (sourceEntries.length === 0) return false;
+    sourceEntries.forEach(function (e) {
+      entries.push({ id: uid(), date: iso, client: e.client, hours: e.hours, pay: e.pay });
+    });
+    saveAll();
+    renderDayCard();
+    renderGrid();
+    renderSummary();
+    return true;
+  }
+
+  function requestCopyLastWeek() {
+    var sourceIso = isoDate(addDays(new Date(selectedIso + 'T00:00:00'), -7));
+    if (entriesFor(sourceIso).length === 0) {
+      alert('No hay nada apuntado hace una semana (el ' + sourceIso.split('-').reverse().join('/') + ') para copiar.');
+      return;
+    }
+    if (entriesFor(selectedIso).length > 0) {
+      document.getElementById('copyBackdrop').classList.add('open');
+    } else {
+      copyLastWeekInto(selectedIso);
+    }
+  }
+
+  function renderSummary() {
+    var pill = document.getElementById('summaryPill');
+    var monthEntries = entries.filter(function (e) {
+      var d = new Date(e.date + 'T00:00:00');
+      return d.getFullYear() === viewYear && d.getMonth() === viewMonth;
+    });
+    var total = monthEntries.reduce(function (s, e) { return s + (e.pay || 0); }, 0);
+    var hours = monthEntries.reduce(function (s, e) { return s + (e.hours || 0); }, 0);
+    var isCurrentMonth = viewYear === today.getFullYear() && viewMonth === today.getMonth();
+    var label = isCurrentMonth ? 'Este mes' : 'Total de ' + MONTH_NAMES[viewMonth];
+    pill.innerHTML =
+      '<div class="stat-label">' + label + '</div>' +
+      '<div class="stat-value">' + fmtMoney(total) + '</div>' +
+      '<div class="stat-hours">' + fmtHours(hours) + ' trabajadas</div>';
+  }
+
+  document.getElementById('prevMonthBtn').addEventListener('click', function () {
+    viewMonth -= 1;
+    if (viewMonth < 0) { viewMonth = 11; viewYear -= 1; }
+    renderGrid();
+    renderSummary();
+  });
+  document.getElementById('nextMonthBtn').addEventListener('click', function () {
+    viewMonth += 1;
+    if (viewMonth > 11) { viewMonth = 0; viewYear += 1; }
+    renderGrid();
+    renderSummary();
+  });
+  document.getElementById('todayBtn').addEventListener('click', function () {
+    viewYear = today.getFullYear();
+    viewMonth = today.getMonth();
+    renderGrid();
+    renderSummary();
+  });
+
+  // settings sheet
+  var settingsBackdrop = document.getElementById('settingsBackdrop');
+  document.getElementById('settingsToggle').addEventListener('click', function () {
+    settingsBackdrop.classList.add('open');
+  });
+  document.getElementById('settingsClose').addEventListener('click', function () {
+    settingsBackdrop.classList.remove('open');
+  });
+
+  // export backup
+  document.getElementById('exportBtn').addEventListener('click', function () {
+    var data = { app: 'calendario-trabajo', exportedAt: new Date().toISOString(), entries: entries, memory: memory };
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'calendario-backup-' + isoDate(new Date()) + '.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+  });
+
+  // import backup
+  var importFile = document.getElementById('importFile');
+  document.getElementById('importBtn').addEventListener('click', function () { importFile.click(); });
+  importFile.addEventListener('change', function () {
+    var file = importFile.files && importFile.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var data = JSON.parse(reader.result);
+        if (!data || !Array.isArray(data.entries)) throw new Error('formato');
+        entries = data.entries;
+        memory = data.memory && typeof data.memory === 'object' ? data.memory : {};
+        saveAll();
+        renderGrid();
+        renderDayCard();
+        renderSummary();
+        showImportResult('Copia importada', 'Se cargaron ' + entries.length + ' apuntes correctamente.');
+      } catch (e) {
+        showImportResult('No se pudo importar', 'El archivo no parece una copia de seguridad válida de esta app.');
+      }
+      importFile.value = '';
+    };
+    reader.readAsText(file);
+  });
+
+  function showImportResult(title, text) {
+    document.getElementById('importResultTitle').textContent = title;
+    document.getElementById('importResultText').textContent = text;
+    document.getElementById('importResultBackdrop').classList.add('open');
+  }
+  document.getElementById('importResultClose').addEventListener('click', function () {
+    document.getElementById('importResultBackdrop').classList.remove('open');
+  });
+
+  // delete all history
+  var resetBackdrop = document.getElementById('resetBackdrop');
+  document.getElementById('deleteAllBtn').addEventListener('click', function () {
+    settingsBackdrop.classList.remove('open');
+    resetBackdrop.classList.add('open');
+  });
+  document.getElementById('resetCancel').addEventListener('click', function () {
+    resetBackdrop.classList.remove('open');
+  });
+  document.getElementById('resetConfirm').addEventListener('click', function () {
+    entries = [];
+    memory = {};
+    saveAll();
+    resetBackdrop.classList.remove('open');
+    renderGrid();
+    renderDayCard();
+    renderSummary();
+  });
+
+  var copyBackdrop = document.getElementById('copyBackdrop');
+  document.getElementById('copyCancel').addEventListener('click', function () {
+    copyBackdrop.classList.remove('open');
+  });
+  document.getElementById('copyConfirm').addEventListener('click', function () {
+    copyLastWeekInto(selectedIso);
+    copyBackdrop.classList.remove('open');
+  });
+
+  // ---- autenticación ----
+  var loadingScreen = document.getElementById('loadingScreen');
+  var authScreen = document.getElementById('authScreen');
+  var appRoot = document.getElementById('appRoot');
+  var authForm = document.getElementById('authForm');
+  var authEmailInput = document.getElementById('authEmail');
+  var authPasswordInput = document.getElementById('authPassword');
+  var authError = document.getElementById('authError');
+  var authInfo = document.getElementById('authInfo');
+  var signInBtn = document.getElementById('signInBtn');
+  var signUpBtn = document.getElementById('signUpBtn');
+  var signOutBtn = document.getElementById('signOutBtn');
+  var forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
+  var toggleEye = document.getElementById('toggleEye');
+  var accountEmailEl = document.getElementById('accountEmail');
+
+  toggleEye.addEventListener('click', function () {
+    var showing = authPasswordInput.type === 'text';
+    authPasswordInput.type = showing ? 'password' : 'text';
+    toggleEye.setAttribute('aria-label', showing ? 'Mostrar contraseña' : 'Ocultar contraseña');
+  });
+
+  function authErrorMessage(err) {
+    var code = (err && err.code) || '';
+    var map = {
+      'auth/invalid-email': 'Ese correo no parece válido.',
+      'auth/missing-password': 'Escribe una contraseña.',
+      'auth/weak-password': 'La contraseña debe tener al menos 6 caracteres.',
+      'auth/email-already-in-use': 'Ya existe una cuenta con ese correo. Toca "Entrar" en vez de "Crear cuenta nueva" — si no recuerdas la contraseña, usa "¿Olvidaste tu contraseña?".',
+      'auth/invalid-credential': 'Correo o contraseña incorrectos. Si es la primera vez que entras, toca "Crear cuenta nueva" en vez de "Entrar".',
+      'auth/invalid-login-credentials': 'Correo o contraseña incorrectos. Si es la primera vez que entras, toca "Crear cuenta nueva" en vez de "Entrar".',
+      'auth/wrong-password': 'Correo o contraseña incorrectos. Si no la recuerdas, usa "¿Olvidaste tu contraseña?".',
+      'auth/user-not-found': 'No existe ninguna cuenta con ese correo. Toca "Crear cuenta nueva" para crear una.',
+      'auth/too-many-requests': 'Demasiados intentos. Espera un momento y vuelve a intentarlo.',
+      'auth/network-request-failed': 'No hay conexión a internet. Revisa tu wifi o datos móviles.'
+    };
+    return map[code] || 'No se ha podido completar la acción. Inténtalo de nuevo.';
+  }
+
+  function setAuthBusy(busy) {
+    signInBtn.disabled = busy;
+    signUpBtn.disabled = busy;
+  }
+
+  authForm.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    authError.textContent = '';
+    authInfo.textContent = '';
+    var email = authEmailInput.value.trim();
+    var password = authPasswordInput.value;
+    if (!email || !password) return;
+    setAuthBusy(true);
+    signInWithEmailAndPassword(auth, email, password)
+      .catch(function (err) { authError.textContent = authErrorMessage(err); })
+      .finally(function () { setAuthBusy(false); });
+  });
+
+  signUpBtn.addEventListener('click', function () {
+    authError.textContent = '';
+    authInfo.textContent = '';
+    var email = authEmailInput.value.trim();
+    var password = authPasswordInput.value;
+    if (!email) { authError.textContent = 'Escribe tu correo electrónico.'; return; }
+    if (!password || password.length < 6) { authError.textContent = 'La contraseña debe tener al menos 6 caracteres.'; return; }
+    setAuthBusy(true);
+    createUserWithEmailAndPassword(auth, email, password)
+      .catch(function (err) { authError.textContent = authErrorMessage(err); })
+      .finally(function () { setAuthBusy(false); });
+  });
+
+  forgotPasswordBtn.addEventListener('click', function () {
+    authError.textContent = '';
+    authInfo.textContent = '';
+    var email = authEmailInput.value.trim();
+    if (!email) {
+      authError.textContent = 'Escribe arriba el correo de tu cuenta y luego toca "¿Olvidaste tu contraseña?".';
+      return;
+    }
+    forgotPasswordBtn.disabled = true;
+    sendPasswordResetEmail(auth, email)
+      .then(function () {
+        authInfo.textContent = 'Te hemos enviado un correo a ' + email + ' con un enlace para elegir una contraseña nueva. Revisa también la carpeta de spam.';
+      })
+      .catch(function (err) { authError.textContent = authErrorMessage(err); })
+      .finally(function () { forgotPasswordBtn.disabled = false; });
+  });
+
+  signOutBtn.addEventListener('click', function () {
+    settingsBackdrop.classList.remove('open');
+    signOut(auth);
+  });
+
+  var authResolved = false;
+  var authStuckTimer = setTimeout(function () {
+    if (authResolved) return;
+    loadingScreen.hidden = true;
+    authScreen.hidden = false;
+    authError.textContent = 'La comprobación de tu sesión está tardando demasiado. Puedes entrar o crear tu cuenta aquí abajo de todos modos.';
+  }, 2500);
+
+  onAuthStateChanged(auth, function (user) {
+    authResolved = true;
+    clearTimeout(authStuckTimer);
+    loadingScreen.hidden = true;
+    authError.textContent = '';
+    authInfo.textContent = '';
+    if (user) {
+      currentUser = user;
+      authScreen.hidden = true;
+      appRoot.hidden = false;
+      authForm.reset();
+      accountEmailEl.textContent = user.email || '';
+      subscribeToAccount(user.uid);
+    } else {
+      currentUser = null;
+      unsubscribeAccount();
+      appRoot.hidden = true;
+      authScreen.hidden = false;
+    }
+  });
+
+  renderDow();
+  renderGrid();
+  renderDayCard();
+  renderSummary();
+})();
+</script>
+</body>
+</html>
