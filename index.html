@@ -329,9 +329,18 @@
   .eye-btn { border: none; background: transparent; color: var(--text-tertiary); cursor: pointer; display: flex; padding: 2px; }
   .auth-error {
     background: var(--danger-soft); color: var(--danger); font-size: 0.82rem; border-radius: 10px;
-    padding: 9px 12px; margin-bottom: 12px; display: none;
+    padding: 9px 12px; margin-bottom: 12px; display: block;
   }
-  .auth-error.show { display: block; }
+  .auth-error:empty { display: none; }
+  .auth-info {
+    background: var(--fill); color: var(--text); font-size: 0.82rem; border-radius: 10px;
+    padding: 9px 12px; margin-bottom: 12px; display: block;
+  }
+  .auth-info:empty { display: none; }
+  .link-btn {
+    border: none; background: transparent; color: var(--accent); font-weight: 600;
+    font-size: 0.8rem; cursor: pointer; padding: 0; display: block; margin: -6px 0 12px auto;
+  }
   .auth-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
   .btn-primary {
     padding: 12px; border-radius: 12px; border: none; background: var(--accent); color: #fff;
@@ -364,7 +373,6 @@
 
 <div class="center-screen" id="loadingScreen">
   <div class="loading-dot"></div>
-  <p style="position:fixed;bottom:10px;left:0;right:0;text-align:center;font-family:monospace;font-size:11px;color:#999;">build-v4-diagnostico</p>
 </div>
 
 <div class="center-screen" id="authScreen" hidden>
@@ -376,6 +384,7 @@
     <p class="sub">Entra con tu cuenta para que tus clientas, horas y cobros vivan también en la nube.</p>
 
     <div class="auth-error" id="authError"></div>
+    <div class="auth-info" id="authInfo"></div>
 
     <form id="authForm">
       <label class="field-label" for="authEmail">Correo electrónico</label>
@@ -389,6 +398,7 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>
         </button>
       </div>
+      <button type="button" class="link-btn" id="forgotPasswordBtn">¿Olvidaste tu contraseña?</button>
       <div class="auth-actions">
         <button type="submit" class="btn-primary" id="signInBtn">Entrar</button>
         <button type="button" class="btn-secondary" id="signUpBtn">Crear cuenta nueva</button>
@@ -515,7 +525,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
   getAuth, onAuthStateChanged, signInWithEmailAndPassword,
-  createUserWithEmailAndPassword, signOut
+  createUserWithEmailAndPassword, signOut, sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
   getFirestore, doc, setDoc, onSnapshot, enableIndexedDbPersistence
@@ -1067,9 +1077,11 @@ try { enableIndexedDbPersistence(db); } catch (e) { /* fine, e.g. multiple tabs 
   var authEmailInput = document.getElementById('authEmail');
   var authPasswordInput = document.getElementById('authPassword');
   var authError = document.getElementById('authError');
+  var authInfo = document.getElementById('authInfo');
   var signInBtn = document.getElementById('signInBtn');
   var signUpBtn = document.getElementById('signUpBtn');
   var signOutBtn = document.getElementById('signOutBtn');
+  var forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
   var toggleEye = document.getElementById('toggleEye');
   var accountEmailEl = document.getElementById('accountEmail');
 
@@ -1085,11 +1097,11 @@ try { enableIndexedDbPersistence(db); } catch (e) { /* fine, e.g. multiple tabs 
       'auth/invalid-email': 'Ese correo no parece válido.',
       'auth/missing-password': 'Escribe una contraseña.',
       'auth/weak-password': 'La contraseña debe tener al menos 6 caracteres.',
-      'auth/email-already-in-use': 'Ya existe una cuenta con ese correo. Prueba a entrar en vez de crear una nueva.',
-      'auth/invalid-credential': 'Correo o contraseña incorrectos.',
-      'auth/invalid-login-credentials': 'Correo o contraseña incorrectos.',
-      'auth/wrong-password': 'Correo o contraseña incorrectos.',
-      'auth/user-not-found': 'No existe ninguna cuenta con ese correo.',
+      'auth/email-already-in-use': 'Ya existe una cuenta con ese correo. Toca "Entrar" en vez de "Crear cuenta nueva" — si no recuerdas la contraseña, usa "¿Olvidaste tu contraseña?".',
+      'auth/invalid-credential': 'Correo o contraseña incorrectos. Si es la primera vez que entras, toca "Crear cuenta nueva" en vez de "Entrar".',
+      'auth/invalid-login-credentials': 'Correo o contraseña incorrectos. Si es la primera vez que entras, toca "Crear cuenta nueva" en vez de "Entrar".',
+      'auth/wrong-password': 'Correo o contraseña incorrectos. Si no la recuerdas, usa "¿Olvidaste tu contraseña?".',
+      'auth/user-not-found': 'No existe ninguna cuenta con ese correo. Toca "Crear cuenta nueva" para crear una.',
       'auth/too-many-requests': 'Demasiados intentos. Espera un momento y vuelve a intentarlo.',
       'auth/network-request-failed': 'No hay conexión a internet. Revisa tu wifi o datos móviles.'
     };
@@ -1104,6 +1116,7 @@ try { enableIndexedDbPersistence(db); } catch (e) { /* fine, e.g. multiple tabs 
   authForm.addEventListener('submit', function (ev) {
     ev.preventDefault();
     authError.textContent = '';
+    authInfo.textContent = '';
     var email = authEmailInput.value.trim();
     var password = authPasswordInput.value;
     if (!email || !password) return;
@@ -1115,6 +1128,7 @@ try { enableIndexedDbPersistence(db); } catch (e) { /* fine, e.g. multiple tabs 
 
   signUpBtn.addEventListener('click', function () {
     authError.textContent = '';
+    authInfo.textContent = '';
     var email = authEmailInput.value.trim();
     var password = authPasswordInput.value;
     if (!email) { authError.textContent = 'Escribe tu correo electrónico.'; return; }
@@ -1123,6 +1137,23 @@ try { enableIndexedDbPersistence(db); } catch (e) { /* fine, e.g. multiple tabs 
     createUserWithEmailAndPassword(auth, email, password)
       .catch(function (err) { authError.textContent = authErrorMessage(err); })
       .finally(function () { setAuthBusy(false); });
+  });
+
+  forgotPasswordBtn.addEventListener('click', function () {
+    authError.textContent = '';
+    authInfo.textContent = '';
+    var email = authEmailInput.value.trim();
+    if (!email) {
+      authError.textContent = 'Escribe arriba el correo de tu cuenta y luego toca "¿Olvidaste tu contraseña?".';
+      return;
+    }
+    forgotPasswordBtn.disabled = true;
+    sendPasswordResetEmail(auth, email)
+      .then(function () {
+        authInfo.textContent = 'Te hemos enviado un correo a ' + email + ' con un enlace para elegir una contraseña nueva. Revisa también la carpeta de spam.';
+      })
+      .catch(function (err) { authError.textContent = authErrorMessage(err); })
+      .finally(function () { forgotPasswordBtn.disabled = false; });
   });
 
   signOutBtn.addEventListener('click', function () {
@@ -1143,6 +1174,7 @@ try { enableIndexedDbPersistence(db); } catch (e) { /* fine, e.g. multiple tabs 
     clearTimeout(authStuckTimer);
     loadingScreen.hidden = true;
     authError.textContent = '';
+    authInfo.textContent = '';
     if (user) {
       currentUser = user;
       authScreen.hidden = true;
