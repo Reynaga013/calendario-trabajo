@@ -396,6 +396,23 @@
   </div>
 </div>
 
+<script>
+  (function () {
+    setTimeout(function () {
+      var ls = document.getElementById('loadingScreen');
+      if (ls && !ls.hidden) {
+        ls.hidden = true;
+        var as = document.getElementById('authScreen');
+        if (as) as.hidden = false;
+        var ae = document.getElementById('authError');
+        if (ae && !ae.textContent) {
+          ae.textContent = 'La comprobación de tu sesión está tardando demasiado. Puedes entrar o crear tu cuenta aquí abajo de todos modos.';
+        }
+      }
+    }, 3500);
+  })();
+</script>
+
 <div id="appRoot" hidden>
 <div class="wrap">
   <header class="top">
@@ -1116,8 +1133,8 @@ try { enableIndexedDbPersistence(db); } catch (e) { /* fine, e.g. multiple tabs 
     if (authResolved) return;
     loadingScreen.hidden = true;
     authScreen.hidden = false;
-    authError.textContent = 'Está tardando más de lo normal en comprobar tu sesión. Si abriste este link dentro de otra app (Discord, WhatsApp, Instagram...), ábrelo directamente en Safari o Chrome. Mientras tanto, puedes entrar o crear tu cuenta aquí abajo.';
-  }, 6000);
+    authError.textContent = 'La comprobación de tu sesión está tardando demasiado. Puedes entrar o crear tu cuenta aquí abajo de todos modos.';
+  }, 2500);
 
   onAuthStateChanged(auth, function (user) {
     authResolved = true;
