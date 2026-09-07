@@ -1,0 +1,38 @@
+// ============================================================================
+// Reglas de seguridad de Firestore del proyecto `calendario-limpieza`.
+//
+// OJO: esta carpeta no tiene `firebase.json`, así que este archivo NO se
+// despliega desde aquí. Es la copia de referencia, para que las reglas dejen
+// de vivir solo dentro de la consola y se pueda ver su historial en git.
+//
+// Para aplicarlas: Firebase console → calendario-limpieza → Firestore →
+// pestaña Reglas → pegar esto → Publicar.
+// Si algún día se añade `firebase.json`, pasará a desplegarse con
+// `npx firebase deploy --only firestore:rules` y este comentario sobra.
+// ============================================================================
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Todos los datos de la cuenta: solo su dueña.
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Registro de uso, para el panel privado. Solo guarda la fecha y un
+    // contador, nada del contenido de la agenda. El panel lo lee desde fuera
+    // con el Admin SDK, que no pasa por estas reglas.
+    match /_actividad/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid;
+      allow delete: if false;
+    }
+
+    // Todo lo demás, denegado por defecto.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

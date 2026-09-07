@@ -535,7 +535,8 @@ import {
   createUserWithEmailAndPassword, signOut, sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
-  getFirestore, doc, setDoc, onSnapshot, enableIndexedDbPersistence
+  getFirestore, doc, setDoc, onSnapshot, enableIndexedDbPersistence,
+  serverTimestamp, arrayUnion, increment
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 var firebaseConfig = {
@@ -549,6 +550,40 @@ var firebaseConfig = {
 var fbApp = initializeApp(firebaseConfig);
 var auth = getAuth(fbApp);
 var db = getFirestore(fbApp);
+
+  /* ---------- registro de uso (panel privado) -------------------------
+   * Deja constancia de que esta cuenta ha abierto la app hoy, para el panel
+   * de uso. Solo se guarda el uid (que ya es la clave de este usuario aqui),
+   * la fecha y un contador: ni nombres, ni correos, ni nada del contenido.
+   * Como mucho una escritura cada 15 minutos por dispositivo, y si falla se
+   * ignora en silencio: medir el uso nunca puede romper la app.
+   * ------------------------------------------------------------------- */
+  function _diaHoy(){
+    return new Intl.DateTimeFormat('en-CA', {timeZone:'Europe/Madrid',
+      year:'numeric', month:'2-digit', day:'2-digit'}).format(new Date());
+  }
+  function _frenado(uid){
+    try {
+      var previo = JSON.parse(localStorage.getItem('actividad.'+uid) || 'null');
+      if(previo && previo.dia === _diaHoy() && Date.now()-previo.ts < 15*60000) return true;
+      localStorage.setItem('actividad.'+uid, JSON.stringify({dia:_diaHoy(), ts:Date.now()}));
+    } catch(e){}
+    return false;
+  }
+  function registrarActividad(uid){
+    if(!uid || _frenado(uid)) return;
+    setDoc(doc(db, '_actividad', uid), {
+      ultimaVez: serverTimestamp(),
+      dias: arrayUnion(_diaHoy()),
+      sesiones: increment(1)
+    }, {merge:true}).catch(function(){});
+  }
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState === 'visible' && auth && auth.currentUser){
+      registrarActividad(auth.currentUser.uid);
+    }
+  });
+
 try { enableIndexedDbPersistence(db); } catch (e) { /* fine, e.g. multiple tabs open */ }
 
 (function () {
@@ -1192,6 +1227,7 @@ try { enableIndexedDbPersistence(db); } catch (e) { /* fine, e.g. multiple tabs 
       authForm.reset();
       accountEmailEl.textContent = user.email || '';
       subscribeToAccount(user.uid);
+      registrarActividad(user.uid);
     } else {
       currentUser = null;
       unsubscribeAccount();
