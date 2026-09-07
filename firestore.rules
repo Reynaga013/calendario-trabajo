@@ -1,14 +1,6 @@
 // ============================================================================
 // Reglas de seguridad de Firestore del proyecto `calendario-limpieza`.
-//
-// OJO: esta carpeta no tiene `firebase.json`, así que este archivo NO se
-// despliega desde aquí. Es la copia de referencia, para que las reglas dejen
-// de vivir solo dentro de la consola y se pueda ver su historial en git.
-//
-// Para aplicarlas: Firebase console → calendario-limpieza → Firestore →
-// pestaña Reglas → pegar esto → Publicar.
-// Si algún día se añade `firebase.json`, pasará a desplegarse con
-// `npx firebase deploy --only firestore:rules` y este comentario sobra.
+// Se despliegan con:  npx firebase deploy --only firestore:rules
 // ============================================================================
 
 rules_version = '2';

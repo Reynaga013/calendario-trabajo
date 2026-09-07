@@ -1,0 +1,6 @@
+{
+  "//": "Solo se declara firestore, y solo las reglas. Ni hosting (esta app va por GitHub Pages) ni indexes: asi un 'firebase deploy' lanzado desde aqui por error no puede tocar nada mas que las reglas de seguridad.",
+  "firestore": {
+    "rules": "firestore.rules"
+  }
+}
