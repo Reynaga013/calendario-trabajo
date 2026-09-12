@@ -93,11 +93,21 @@
 
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
+  /* El recorte horizontal va SOLO en <html>, nunca en <body>.
+     Por qué: cuando un elemento tiene overflow-x distinto de visible, la
+     especificación obliga a que su overflow-y pase de `visible` a `auto`. El
+     de <html> se propaga al viewport y no pasa nada, pero el de <body> lo
+     convierte en un contenedor de scroll propio, anidado dentro del scroll
+     del documento. Android Chrome lleva eso mucho peor que el Safari del
+     iPhone, y además rompe el `position: sticky` de la cabecera de mes, que
+     deja de pegarse porque su contenedor pasa a ser ese body con scroll. */
   html, body {
     margin: 0; padding: 0;
+    width: 100%;
+  }
+  html {
     overflow-x: hidden;
     overscroll-behavior-x: none;
-    width: 100%;
   }
 
   body {
@@ -106,12 +116,27 @@
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     padding-bottom: 128px;
+    /* 100vh en Android es la altura CON la barra de direcciones retraída, así
+       que la página se queda más alta que la pantalla y da un scroll fantasma.
+       100dvh sigue a la barra según aparece y desaparece. El 100vh de encima
+       se queda como respaldo para navegadores sin dvh. */
     min-height: 100vh;
-    touch-action: pan-y;
-    overscroll-behavior-y: contain;
+    min-height: 100dvh;
+    /* Se quita `touch-action: pan-y`. No servía para nada aquí (no hay ningún
+       gesto horizontal que proteger) y a cambio bloqueaba el zoom con dos
+       dedos, que en una app para leer importes y horas es justo lo que más
+       falta hace. Se quita también `overscroll-behavior-y: contain`, que
+       anulaba el rebote al llegar al borde y hacía que la pantalla pareciera
+       trabada al arrastrar desde arriba. */
   }
 
-  .bg-mesh { position: fixed; inset: 0; overflow: hidden; z-index: -1; }
+  /* `pointer-events: none` es imprescindible, no decorativo. Esta capa es un
+     elemento `position: fixed` que cubre el viewport entero. Sin esto, el dedo
+     aterriza sobre ella en cualquier zona sin contenido encima; y como un
+     elemento fijo no tiene scroll propio, Android Chrome se queda ahí y NO
+     arrastra el documento: la pantalla parece trabada. El Safari del iPhone
+     encadena el scroll al documento y por eso allí no se notaba. */
+  .bg-mesh { position: fixed; inset: 0; overflow: hidden; z-index: -1; pointer-events: none; }
   .bg-mesh span {
     position: absolute; width: 62vmax; height: 62vmax; border-radius: 50%;
     filter: blur(60px); opacity: var(--blob-opacity);
